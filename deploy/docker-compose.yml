@@ -1,9 +1,10 @@
 # BullionBear Portal — deployed on portal.lynkora.com
 #
 # This stack ships ONLY the portal's own containers. TLS termination, the
-# ACME/Let's Encrypt certificate and ports 80/443 are owned by the pre-existing
-# `autom` Traefik already running on this host. We attach to its external
-# network (`autom_net`) so that Traefik can discover and route to us via labels.
+# ACME/Let's Encrypt certificate and ports 80/443 are owned by the shared
+# standalone Traefik on this host (compose project `traefik`, /opt/traefik).
+# We attach to its external `web` network so Traefik can discover and route to
+# us via the traefik.* labels below.
 #
 # Routing (single host, path-based):
 #   portal.lynkora.com/api/*  -> backend:8000
@@ -18,33 +19,33 @@ services:
       - portal-data:/app/app/data
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=autom_net"
+      - "traefik.docker.network=web"
       - "traefik.http.routers.portal-backend.rule=Host(`portal.lynkora.com`) && PathPrefix(`/api`)"
       - "traefik.http.routers.portal-backend.entrypoints=websecure"
       - "traefik.http.routers.portal-backend.tls.certresolver=le"
       - "traefik.http.routers.portal-backend.priority=100"
       - "traefik.http.services.portal-backend.loadbalancer.server.port=8000"
     networks:
-      - autom
+      - web
 
   frontend:
     image: ghcr.io/bullionbear/portal-frontend:latest
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=autom_net"
+      - "traefik.docker.network=web"
       - "traefik.http.routers.portal-frontend.rule=Host(`portal.lynkora.com`)"
       - "traefik.http.routers.portal-frontend.entrypoints=websecure"
       - "traefik.http.routers.portal-frontend.tls.certresolver=le"
       - "traefik.http.routers.portal-frontend.priority=1"
       - "traefik.http.services.portal-frontend.loadbalancer.server.port=80"
     networks:
-      - autom
+      - web
 
 volumes:
   portal-data:
 
 networks:
-  autom:
-    name: autom_net
+  web:
+    name: web
     external: true

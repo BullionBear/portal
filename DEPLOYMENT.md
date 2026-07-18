@@ -4,8 +4,10 @@
 
 - **Frontend**: Svelte + Vite, built to static and served by nginx → `portal.lynkora.com`
 - **Backend**: FastAPI (uvicorn) → `portal.lynkora.com/api`
-- **Reverse proxy / TLS**: the pre-existing **`autom` Traefik** on the host
-  (Let's Encrypt, HTTP-01 challenge). The portal does **not** run its own Traefik.
+- **Reverse proxy / TLS**: the shared standalone **Traefik** on the host
+  (compose project `traefik`, `/opt/traefik`; Let's Encrypt, HTTP-01 challenge).
+  Apps attach to its external **`web`** network and advertise routes via
+  `traefik.*` labels. The portal does **not** run its own Traefik.
 - **Host**: `root@139.162.74.23` (shared box; also runs the `autom`, `lynxlinkage-db`
   and `statarb-nats` stacks — the portal is isolated in its own compose project).
 - **Registry**: GHCR, private —
