@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+.pytest_cache/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+
+# Secrets / credentials — never commit
+credentials/
+deploy/.env
+*.pem
+*_key
+*_key.pub
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "grafana",
+    "name": "Grafana",
+    "description": "Metrics, logs, and operational dashboards",
+    "url": "https://grafana.example.com",
+    "icon": "grafana",
+    "category": "Observability",
+    "color": "#F46800",
+    "order": 10,
+    "enabled": true
+  },
+  {
+    "id": "jira",
+    "name": "Jira",
+    "description": "Issue tracking and sprint planning",
+    "url": "https://jira.example.com",
+    "icon": "jira",
+    "category": "Collaboration",
+    "color": "#2684FF",
+    "order": 20,
+    "enabled": true
+  },
+  {
+    "id": "gitlab",
+    "name": "GitLab",
+    "description": "Source control, CI/CD, and code review",
+    "url": "https://gitlab.example.com",
+    "icon": "gitlab",
+    "category": "Engineering",
+    "color": "#FC6D26",
+    "order": 30,
+    "enabled": true
+  },
+  {
+    "id": "confluence",
+    "name": "Confluence",
+    "description": "Team docs, runbooks, and knowledge base",
+    "url": "https://confluence.example.com",
+    "icon": "confluence",
+    "category": "Collaboration",
+    "color": "#172B4D",
+    "order": 40,
+    "enabled": true
+  },
+  {
+    "id": "prometheus",
+    "name": "Prometheus",
+    "description": "Time-series metrics and alerting rules",
+    "url": "https://prometheus.example.com",
+    "icon": "prometheus",
+    "category": "Observability",
+    "color": "#E6522C",
+    "order": 50,
+    "enabled": true
+  },
+  {
+    "id": "seq",
+    "name": "Seq Console",
+    "description": "Internal trading sequence control plane",
+    "url": "https://seq.example.com",
+    "icon": "custom",
+    "category": "Internal",
+    "color": "#C4A35A",
+    "order": 60,
+    "enabled": true
+  }
+]
