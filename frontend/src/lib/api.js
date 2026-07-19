@@ -9,6 +9,17 @@ const PUBLIC_API = '/api/public'
 const PRIVATE_API = '/api/private'
 
 /**
+ * Send unauthenticated private-API callers through Discord OAuth (oauth2-proxy).
+ * @param {Response} response
+ */
+function redirectToLoginIfNeeded(response) {
+  if (response.status === 401 || response.status === 403) {
+    const rd = encodeURIComponent(window.location.href)
+    window.location.href = `/oauth2/sign_in?rd=${rd}`
+  }
+}
+
+/**
  * @param {Response} response
  * @param {string} fallback
  */
@@ -42,7 +53,8 @@ export async function fetchPortalInfo() {
  */
 export async function fetchApps(options = {}) {
   const base = options.includeDisabled ? PRIVATE_API : PUBLIC_API
-  const response = await fetch(`${base}/apps`)
+  const response = await fetch(`${base}/apps`, { credentials: 'same-origin' })
+  if (options.includeDisabled) redirectToLoginIfNeeded(response)
   if (!response.ok) {
     throw new Error(await readError(response, 'Failed to load applications'))
   }
@@ -56,9 +68,11 @@ export async function fetchApps(options = {}) {
 export async function createApp(payload) {
   const response = await fetch(`${PRIVATE_API}/apps`, {
     method: 'POST',
+    credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  redirectToLoginIfNeeded(response)
   if (!response.ok) {
     throw new Error(await readError(response, 'Failed to create app'))
   }
@@ -73,9 +87,11 @@ export async function createApp(payload) {
 export async function updateApp(id, payload) {
   const response = await fetch(`${PRIVATE_API}/apps/${encodeURIComponent(id)}`, {
     method: 'PUT',
+    credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  redirectToLoginIfNeeded(response)
   if (!response.ok) {
     throw new Error(await readError(response, 'Failed to update app'))
   }
@@ -89,7 +105,9 @@ export async function updateApp(id, payload) {
 export async function deleteApp(id) {
   const response = await fetch(`${PRIVATE_API}/apps/${encodeURIComponent(id)}`, {
     method: 'DELETE',
+    credentials: 'same-origin',
   })
+  redirectToLoginIfNeeded(response)
   if (!response.ok) {
     throw new Error(await readError(response, 'Failed to delete app'))
   }

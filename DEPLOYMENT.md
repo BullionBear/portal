@@ -15,12 +15,33 @@
 
 ## Routing (single host, path-based)
 
-| Path | Service |
-|------|---------|
-| `portal.lynkora.com/api/*` | `backend:8000` (Traefik router priority 100) |
-| `portal.lynkora.com/*` | `frontend:80` — nginx SPA (priority 1) |
+| Path | Service | Auth |
+|------|---------|------|
+| `portal.lynkora.com/api/public/*` | `backend:8000` | none |
+| `portal.lynkora.com/api/private/*` | `backend:8000` | Discord OAuth (oauth2-proxy ForwardAuth) |
+| `portal.lynkora.com/admin` | `frontend:80` | Discord OAuth |
+| `portal.lynkora.com/oauth2/*` | `oauth2-proxy:4180` | login / callback |
+| `portal.lynkora.com/*` | `frontend:80` — nginx SPA | none |
 
 Same-origin, so the browser makes no cross-origin calls and no CORS config is needed.
+
+### Discord OAuth (one-time on the server)
+
+1. In the Discord Developer Portal, add redirect URI  
+   `https://portal.lynkora.com/oauth2/callback` (can reuse the autom Admin app).
+2. On the host, create `/opt/portal/deploy/.env` from [`deploy/.env.example`](deploy/.env.example):
+
+```bash
+ssh root@139.162.74.23
+cd /opt/portal/deploy
+cp .env.example .env   # or create from the repo copy
+# fill DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
+openssl rand -base64 32   # -> OAUTH2_PROXY_COOKIE_SECRET
+# DISCORD_GUILD_ID defaults to the Lynx guild
+docker compose -p portal up -d
+```
+
+CI syncs only `docker-compose.yml`; **`.env` is not overwritten** by deploys.
 
 ## CI/CD (`.github/workflows/deploy.yml`)
 
@@ -70,6 +91,8 @@ ssh root@139.162.74.23 'cd /opt/portal/deploy && docker compose -p portal pull &
 curl -I https://portal.lynkora.com/                   # 200
 curl https://portal.lynkora.com/api/public/health     # {"status":"ok"}
 curl https://portal.lynkora.com/api/public/apps       # enabled app catalog JSON
+curl -I https://portal.lynkora.com/api/private/apps   # 302/401 → Discord login
+curl -I https://portal.lynkora.com/admin              # 302/401 → Discord login
 ```
 
 ## Data persistence
