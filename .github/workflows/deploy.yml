@@ -55,6 +55,9 @@ jobs:
     name: Deploy to server
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
 
@@ -73,6 +76,15 @@ jobs:
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/portal/deploy/docker-compose.yml"
 
       - name: Pull & restart
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'cd /opt/portal/deploy && docker compose -p portal pull && docker compose -p portal up -d && docker image prune -f'
+          # Private GHCR packages require auth; log in on the host with this
+          # job's token, then pull/restart the stack.
+          printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/id_ed25519 \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "docker login ghcr.io -u '${{ github.actor }}' --password-stdin \
+             && cd /opt/portal/deploy \
+             && docker compose -p portal pull \
+             && docker compose -p portal up -d \
+             && docker image prune -f"

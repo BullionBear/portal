@@ -39,8 +39,9 @@ On every push to `main`:
 | `SERVER_HOST` | `139.162.74.23` |
 | `SERVER_USER` | `root` |
 
-The server pulls private GHCR images using its existing `ghcr.io` docker login
-(account `yitech`, an owner of the `BullionBear` org).
+The deploy job logs the server into GHCR with the workflow `GITHUB_TOKEN`
+(`packages: read`) before `docker compose pull`, so no long-lived registry
+credential is required on the host.
 
 ## One-time setup (done)
 
