@@ -5,6 +5,9 @@
  * @typedef {Partial<Omit<PortalApp, 'id'>>} AppUpdate
  */
 
+const PUBLIC_API = '/api/public'
+const PRIVATE_API = '/api/private'
+
 /**
  * @param {Response} response
  * @param {string} fallback
@@ -26,7 +29,7 @@ async function readError(response, fallback) {
  * @returns {Promise<PortalInfo>}
  */
 export async function fetchPortalInfo() {
-  const response = await fetch('/api/portal')
+  const response = await fetch(`${PUBLIC_API}/portal`)
   if (!response.ok) {
     throw new Error('Failed to load portal info')
   }
@@ -38,12 +41,8 @@ export async function fetchPortalInfo() {
  * @returns {Promise<PortalApp[]>}
  */
 export async function fetchApps(options = {}) {
-  const params = new URLSearchParams()
-  if (options.includeDisabled) {
-    params.set('include_disabled', 'true')
-  }
-  const query = params.toString()
-  const response = await fetch(`/api/apps${query ? `?${query}` : ''}`)
+  const base = options.includeDisabled ? PRIVATE_API : PUBLIC_API
+  const response = await fetch(`${base}/apps`)
   if (!response.ok) {
     throw new Error(await readError(response, 'Failed to load applications'))
   }
@@ -55,7 +54,7 @@ export async function fetchApps(options = {}) {
  * @returns {Promise<PortalApp>}
  */
 export async function createApp(payload) {
-  const response = await fetch('/api/apps', {
+  const response = await fetch(`${PRIVATE_API}/apps`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -72,7 +71,7 @@ export async function createApp(payload) {
  * @returns {Promise<PortalApp>}
  */
 export async function updateApp(id, payload) {
-  const response = await fetch(`/api/apps/${encodeURIComponent(id)}`, {
+  const response = await fetch(`${PRIVATE_API}/apps/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -88,7 +87,7 @@ export async function updateApp(id, payload) {
  * @returns {Promise<void>}
  */
 export async function deleteApp(id) {
-  const response = await fetch(`/api/apps/${encodeURIComponent(id)}`, {
+  const response = await fetch(`${PRIVATE_API}/apps/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
   if (!response.ok) {

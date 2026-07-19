@@ -31,15 +31,25 @@ Open [http://localhost:5173](http://localhost:5173). Vite proxies `/api` to the 
 
 ## Configure applications
 
-Edit `backend/app/data/apps.json`, or use the API:
+Edit `backend/app/data/apps.json`, use `/admin`, or call the API.
+
+**Public** (no auth — portal UI):
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/portal` | Company name and tagline |
-| `GET` | `/api/apps` | List enabled apps |
-| `POST` | `/api/apps` | Create an app |
-| `PUT` | `/api/apps/{id}` | Update an app |
-| `DELETE` | `/api/apps/{id}` | Delete an app |
+| `GET` | `/api/public/health` | Health check |
+| `GET` | `/api/public/portal` | Company name and tagline |
+| `GET` | `/api/public/apps` | List enabled apps |
+
+**Private** (protect at the API gateway — admin UI):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/private/apps` | List all apps (including disabled) |
+| `GET` | `/api/private/apps/{id}` | Get one app |
+| `POST` | `/api/private/apps` | Create an app |
+| `PUT` | `/api/private/apps/{id}` | Update an app |
+| `DELETE` | `/api/private/apps/{id}` | Delete an app |
 
 Example app entry:
 
@@ -62,7 +72,7 @@ Card icons are loaded from each app’s favicon; if unavailable, a colored capit
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORTAL_COMPANY_NAME` | `BullionBear` | Brand shown in the hero |
+| `PORTAL_COMPANY_NAME` | `Lynkora` | Brand shown in the hero |
 | `PORTAL_TAGLINE` | `Company applications at a glance` | Subtitle under the brand |
 | `PORTAL_APPS_FILE` | `backend/app/data/apps.json` | Path to apps JSON |
 | `PORTAL_CORS_ORIGINS` | `["http://localhost:5173", ...]` | Allowed frontend origins |

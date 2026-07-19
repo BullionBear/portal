@@ -66,9 +66,9 @@ ssh root@139.162.74.23 'cd /opt/portal/deploy && docker compose -p portal pull &
 ## Verify
 
 ```bash
-curl -I https://portal.lynkora.com/            # 200
-curl https://portal.lynkora.com/api/health     # {"status":"ok"}
-curl https://portal.lynkora.com/api/apps       # app catalog JSON
+curl -I https://portal.lynkora.com/                   # 200
+curl https://portal.lynkora.com/api/public/health     # {"status":"ok"}
+curl https://portal.lynkora.com/api/public/apps       # enabled app catalog JSON
 ```
 
 ## Data persistence

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
@@ -21,39 +21,51 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+public = APIRouter(prefix="/api/public", tags=["public"])
+private = APIRouter(prefix="/api/private", tags=["private"])
 
-@app.get("/api/health")
+
+@public.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/api/portal", response_model=PortalInfo)
+@public.get("/portal", response_model=PortalInfo)
 def portal_info() -> PortalInfo:
     return PortalInfo(company=settings.company_name, tagline=settings.tagline)
 
 
-@app.get("/api/apps", response_model=list[App])
-def list_apps(
-    include_disabled: bool = Query(default=False),
-) -> list[App]:
-    return store.list_apps(include_disabled=include_disabled)
+@public.get("/apps", response_model=list[App])
+def list_public_apps() -> list[App]:
+    """Enabled apps only — safe for the public portal."""
+    return store.list_apps(include_disabled=False)
 
 
-@app.get("/api/apps/{app_id}", response_model=App)
+@private.get("/apps", response_model=list[App])
+def list_private_apps() -> list[App]:
+    """All apps including disabled — for admin."""
+    return store.list_apps(include_disabled=True)
+
+
+@private.get("/apps/{app_id}", response_model=App)
 def get_app(app_id: str) -> App:
     return store.get_app(app_id)
 
 
-@app.post("/api/apps", response_model=App, status_code=201)
+@private.post("/apps", response_model=App, status_code=201)
 def create_app(payload: AppCreate) -> App:
     return store.create_app(payload)
 
 
-@app.put("/api/apps/{app_id}", response_model=App)
+@private.put("/apps/{app_id}", response_model=App)
 def update_app(app_id: str, payload: AppUpdate) -> App:
     return store.update_app(app_id, payload)
 
 
-@app.delete("/api/apps/{app_id}", status_code=204)
+@private.delete("/apps/{app_id}", status_code=204)
 def delete_app(app_id: str) -> None:
     store.delete_app(app_id)
+
+
+app.include_router(public)
+app.include_router(private)

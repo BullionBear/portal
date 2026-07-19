@@ -147,6 +147,10 @@
     overflow: hidden;
   }
 
+  .icon > * {
+    grid-area: 1 / 1;
+  }
+
   .icon.letter {
     background: var(--accent);
     color: #fff;
@@ -165,6 +169,8 @@
   }
 
   .initial {
+    display: grid;
+    place-items: center;
     font-family: var(--font-sans);
     font-size: 1.35rem;
     font-weight: 700;

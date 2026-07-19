@@ -6,7 +6,7 @@
 
   /** @type {import('./api.js').PortalInfo} */
   let portal = $state({
-    company: 'BullionBear',
+    company: 'Lynkora',
     tagline: 'Company applications at a glance',
   })
   /** @type {import('./api.js').PortalApp[]} */
