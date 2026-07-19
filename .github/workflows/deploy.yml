@@ -99,57 +99,97 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Send Discord webhook
-        env:
-          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          BUILD_RESULT: ${{ needs.build.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-          COMMIT_SHA: ${{ github.sha }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Resolve commit message
+        id: meta
         run: |
-          if [ -z "$WEBHOOK_URL" ]; then
+          MSG=$(git log -1 --pretty=%B | tr -d '\r' | head -c 1000)
+          echo "message<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$MSG" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Send Discord notification (Success)
+        if: ${{ needs.build.result == 'success' && needs.deploy.result == 'success' }}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ steps.meta.outputs.message }}
+          ACTOR: ${{ github.actor }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
             echo "DISCORD_WEBHOOK_URL secret is not set; skipping notify"
             exit 0
           fi
-
           SHORT_SHA="${COMMIT_SHA::7}"
-          COMMIT_MSG=$(git log -1 --pretty=%B | tr -d '\r')
+          jq -n \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg commit "[${SHORT_SHA}](${SERVER_URL}/${REPO}/commit/${COMMIT_SHA})" \
+            --arg message "${COMMIT_MESSAGE:-"(no message)"}" \
+            --arg actor "$ACTOR" \
+            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{embeds: [{
+              title: "✅ Deployment Successful",
+              description: "Portal has been deployed to production.",
+              color: 3066993,
+              fields: [
+                {name: "Repository", value: $repo, inline: true},
+                {name: "Branch", value: $branch, inline: true},
+                {name: "Commit", value: $commit, inline: false},
+                {name: "Message", value: $message, inline: false},
+                {name: "Triggered by", value: $actor, inline: true}
+              ],
+              timestamp: $ts
+            }]}' \
+          | curl -sf -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
-          if [ "$DEPLOY_RESULT" = "success" ]; then
-            STATUS="Deploy succeeded"
-            COLOR=5763719
-          elif [ "$BUILD_RESULT" != "success" ]; then
-            STATUS="Build failed"
-            COLOR=15548997
-          elif [ "$DEPLOY_RESULT" = "skipped" ]; then
-            STATUS="Deploy skipped"
-            COLOR=16776960
-          else
-            STATUS="Deploy failed"
-            COLOR=15548997
+      - name: Send Discord notification (Failure)
+        if: ${{ needs.build.result == 'failure' || needs.deploy.result == 'failure' }}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ steps.meta.outputs.message }}
+          SERVER_URL: ${{ github.server_url }}
+          RUN_ID: ${{ github.run_id }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL secret is not set; skipping notify"
+            exit 0
           fi
-
-          payload=$(jq -n \
-            --arg status "$STATUS" \
-            --arg sha "$SHORT_SHA" \
-            --arg full_sha "$COMMIT_SHA" \
-            --arg msg "$COMMIT_MSG" \
-            --arg url "$RUN_URL" \
-            --argjson color "$COLOR" \
-            '{
-              embeds: [{
-                title: ("Portal CI/CD — " + $status),
-                color: $color,
-                fields: [
-                  { name: "Commit", value: ("`" + $sha + "`"), inline: true },
-                  { name: "Full SHA", value: ("`" + $full_sha + "`"), inline: false },
-                  { name: "Message", value: ($msg[0:1000] | if . == "" then "(no message)" else . end), inline: false },
-                  { name: "Run", value: $url, inline: false }
-                ]
-              }]
-            }')
-
-          curl -sS -f -X POST \
-            -H 'Content-Type: application/json' \
-            -d "$payload" \
-            "$WEBHOOK_URL"
+          SHORT_SHA="${COMMIT_SHA::7}"
+          if [ "$BUILD_RESULT" != "success" ]; then
+            TITLE="🔴 Docker Build Failed"
+            DESCRIPTION="Docker image build has failed. Deployment skipped."
+          else
+            TITLE="❌ Deployment Failed"
+            DESCRIPTION="Portal deployment to production has failed."
+          fi
+          jq -n \
+            --arg title "$TITLE" \
+            --arg description "$DESCRIPTION" \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg commit "[${SHORT_SHA}](${SERVER_URL}/${REPO}/commit/${COMMIT_SHA})" \
+            --arg message "${COMMIT_MESSAGE:-"(no message)"}" \
+            --arg run "[View Logs](${SERVER_URL}/${REPO}/actions/runs/${RUN_ID})" \
+            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{embeds: [{
+              title: $title,
+              description: $description,
+              color: 15158332,
+              fields: [
+                {name: "Repository", value: $repo, inline: true},
+                {name: "Branch", value: $branch, inline: true},
+                {name: "Commit", value: $commit, inline: false},
+                {name: "Message", value: $message, inline: false},
+                {name: "Workflow Run", value: $run, inline: true}
+              ],
+              timestamp: $ts
+            }]}' \
+          | curl -sf -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"

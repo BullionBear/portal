@@ -50,7 +50,7 @@ On every push to `main`:
    `:<sha>` to GHCR. Auth via the workflow's `GITHUB_TOKEN` (`packages: write`).
 2. **deploy** — SSH to the host, `scp` the compose file to `/opt/portal/deploy/`,
    then `docker compose -p portal pull && up -d && docker image prune -f`.
-3. **notify** — Discord webhook with commit hash and message.
+3. **notify** — Discord webhook embed with commit hash and message (success/failure).
 
 ### Repo secrets (already set)
 
