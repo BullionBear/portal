@@ -1,5 +1,5 @@
 /**
- * @typedef {{ id: string, name: string, description: string, url: string, icon: string, category: string, color: string, order: number, enabled: boolean }} PortalApp
+ * @typedef {{ id: string, name: string, description: string, url: string, category: string, color: string, order: number, enabled: boolean }} PortalApp
  * @typedef {{ company: string, tagline: string }} PortalInfo
  */
 

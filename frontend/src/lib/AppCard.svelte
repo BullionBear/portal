@@ -1,8 +1,48 @@
 <script>
-  import { iconMarkup } from './icons.js'
-
   /** @type {{ app: import('./api.js').PortalApp, index: number }} */
   let { app, index = 0 } = $props()
+
+  let faviconLoaded = $state(false)
+  let candidateIndex = $state(0)
+
+  const initial = $derived(
+    (app.name.trim().charAt(0) || '?').toUpperCase(),
+  )
+
+  const candidates = $derived.by(() => {
+    try {
+      const origin = new URL(app.url).origin
+      return [
+        `${origin}/favicon.ico`,
+        `${origin}/favicon.png`,
+        `${origin}/apple-touch-icon.png`,
+        `${origin}/apple-touch-icon-precomposed.png`,
+      ]
+    } catch {
+      return []
+    }
+  })
+
+  const faviconSrc = $derived(candidates[candidateIndex] ?? null)
+
+  $effect(() => {
+    // Reset when the app URL changes
+    void app.url
+    faviconLoaded = false
+    candidateIndex = 0
+  })
+
+  function onFaviconLoad() {
+    faviconLoaded = true
+  }
+
+  function onFaviconError() {
+    if (candidateIndex < candidates.length - 1) {
+      candidateIndex += 1
+      return
+    }
+    faviconLoaded = false
+  }
 </script>
 
 <a
@@ -12,8 +52,28 @@
   rel="noopener noreferrer"
   style={`--accent: ${app.color}; --delay: ${index * 55}ms`}
 >
-  <div class="icon" style={`color: ${app.color}`} aria-hidden="true">
-    {@html `<svg viewBox="0 0 24 24" width="28" height="28" xmlns="http://www.w3.org/2000/svg">${iconMarkup(app.icon)}</svg>`}
+  <div
+    class="icon"
+    class:letter={!faviconLoaded}
+    aria-hidden="true"
+  >
+    {#if faviconSrc}
+      <img
+        class="favicon"
+        class:visible={faviconLoaded}
+        src={faviconSrc}
+        alt=""
+        width="28"
+        height="28"
+        loading="lazy"
+        decoding="async"
+        onload={onFaviconLoad}
+        onerror={onFaviconError}
+      />
+    {/if}
+    {#if !faviconLoaded}
+      <span class="initial">{initial}</span>
+    {/if}
   </div>
   <div class="body">
     <div class="meta">
@@ -77,12 +137,39 @@
   }
 
   .icon {
+    position: relative;
     display: grid;
     place-items: center;
     width: 3.1rem;
     height: 3.1rem;
     border-radius: 12px;
     background: color-mix(in srgb, var(--accent) 14%, #fff);
+    overflow: hidden;
+  }
+
+  .icon.letter {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .favicon {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .favicon.visible {
+    opacity: 1;
+  }
+
+  .initial {
+    font-family: var(--font-sans);
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
   }
 
   .meta {

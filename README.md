@@ -49,7 +49,6 @@ Example app entry:
   "name": "Grafana",
   "description": "Metrics, logs, and operational dashboards",
   "url": "https://grafana.example.com",
-  "icon": "grafana",
   "category": "Observability",
   "color": "#F46800",
   "order": 10,
@@ -57,7 +56,7 @@ Example app entry:
 }
 ```
 
-Supported `icon` keys: `grafana`, `jira`, `gitlab`, `confluence`, `prometheus`, `custom`, `default`.
+Card icons are loaded from each app’s favicon; if unavailable, a colored capital letter is shown.
 
 ### Environment variables
 
