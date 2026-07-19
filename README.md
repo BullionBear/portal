@@ -41,17 +41,19 @@ Edit `backend/app/data/apps.json`, use `/admin`, or call the API.
 | `GET` | `/api/public/portal` | Company name and tagline |
 | `GET` | `/api/public/apps` | List enabled apps |
 
-**Private** (Discord OAuth via Traefik + oauth2-proxy — admin UI):
+**Private** (Discord OAuth session — admin UI):
 
 | Method | Path | Description |
 |--------|------|-------------|
+| `GET` | `/api/public/auth/discord/login` | Start Discord OAuth |
+| `GET` | `/api/public/auth/discord/callback` | OAuth callback |
 | `GET` | `/api/private/apps` | List all apps (including disabled) |
 | `GET` | `/api/private/apps/{id}` | Get one app |
 | `POST` | `/api/private/apps` | Create an app |
 | `PUT` | `/api/private/apps/{id}` | Update an app |
 | `DELETE` | `/api/private/apps/{id}` | Delete an app |
 
-In production, Traefik ForwardAuth gates `/api/private` and `/admin` through Discord (guild-restricted). See [`deploy/.env.example`](deploy/.env.example) and [DEPLOYMENT.md](DEPLOYMENT.md).
+Private routes require a Discord login session (guild-restricted). See [`deploy/.env.example`](deploy/.env.example) and [DEPLOYMENT.md](DEPLOYMENT.md).
 
 Example app entry:
 

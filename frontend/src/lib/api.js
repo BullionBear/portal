@@ -9,13 +9,15 @@ const PUBLIC_API = '/api/public'
 const PRIVATE_API = '/api/private'
 
 /**
- * Send unauthenticated private-API callers through Discord OAuth (oauth2-proxy).
+ * Send unauthenticated private-API callers through Discord OAuth.
  * @param {Response} response
  */
 function redirectToLoginIfNeeded(response) {
   if (response.status === 401 || response.status === 403) {
-    const rd = encodeURIComponent(window.location.href)
-    window.location.href = `/oauth2/sign_in?rd=${rd}`
+    const rd = encodeURIComponent(
+      `${window.location.pathname}${window.location.search}`,
+    )
+    window.location.href = `/api/public/auth/discord/login?rd=${rd}`
   }
 }
 

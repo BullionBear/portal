@@ -14,5 +14,17 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
+    # Discord OAuth (admin / private API)
+    discord_client_id: str = ""
+    discord_client_secret: str = ""
+    discord_guild_id: str = ""
+    discord_redirect_uri: str = (
+        "https://portal.lynkora.com/api/public/auth/discord/callback"
+    )
+    session_secret: str = "dev-only-change-me"
+    cookie_secure: bool = True
+    # Optional: host-only cookie when empty
+    cookie_domain: str = ""
+
 
 settings = Settings()

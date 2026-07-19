@@ -1,8 +1,10 @@
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .auth import router as auth_router
 from .config import settings
 from .models import App, AppCreate, AppUpdate, PortalInfo
+from .session import get_current_user
 from .store import AppStore
 
 store = AppStore(settings.apps_file)
@@ -22,7 +24,11 @@ app.add_middleware(
 )
 
 public = APIRouter(prefix="/api/public", tags=["public"])
-private = APIRouter(prefix="/api/private", tags=["private"])
+private = APIRouter(
+    prefix="/api/private",
+    tags=["private"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @public.get("/health")
@@ -67,5 +73,6 @@ def delete_app(app_id: str) -> None:
     store.delete_app(app_id)
 
 
+public.include_router(auth_router)
 app.include_router(public)
 app.include_router(private)
