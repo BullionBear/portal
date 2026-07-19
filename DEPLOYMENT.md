@@ -38,6 +38,7 @@ On every push to `main`:
 | `SSH_PRIVATE_KEY` | dedicated ed25519 deploy key (public half in the server's `authorized_keys`) |
 | `SERVER_HOST` | `139.162.74.23` |
 | `SERVER_USER` | `root` |
+| `DISCORD_WEBHOOK_URL` | Discord incoming webhook URL for deploy result notifications |
 
 The deploy job logs the server into GHCR with the workflow `GITHUB_TOKEN`
 (`packages: read`) before `docker compose pull`, so no long-lived registry
