@@ -18,11 +18,26 @@
       name: '',
       description: '',
       url: 'https://',
+      icon_url: null,
       category: 'General',
       color: '#C4A35A',
       order: 100,
       enabled: true,
     }
+  }
+
+  /** @param {import('./api.js').PortalApp} app */
+  function formFromApp(app) {
+    return {
+      ...app,
+      icon_url: app.icon_url ?? null,
+    }
+  }
+
+  /** @returns {string | null} */
+  function normalizedIconUrl() {
+    const value = (form.icon_url ?? '').trim()
+    return value || null
   }
 
   /** @type {import('./api.js').PortalApp[]} */
@@ -56,7 +71,7 @@
   /** @param {import('./api.js').PortalApp} app */
   function selectApp(app) {
     editingId = app.id
-    form = { ...app }
+    form = formFromApp(app)
     notice = null
     error = null
   }
@@ -84,6 +99,14 @@
     } catch {
       return 'URL must be a valid absolute URL'
     }
+    const iconUrl = normalizedIconUrl()
+    if (iconUrl) {
+      try {
+        void new URL(iconUrl)
+      } catch {
+        return 'Icon URL must be a valid absolute URL'
+      }
+    }
     if (!form.category.trim()) return 'Category is required'
     if (!COLOR_PATTERN.test(form.color.trim())) {
       return 'Color must be a hex value like #C4A35A'
@@ -106,11 +129,13 @@
     saving = true
     error = null
     try {
+      const icon_url = normalizedIconUrl()
       if (isEditing && editingId) {
         const updated = await updateApp(editingId, {
           name: form.name.trim(),
           description: form.description.trim(),
           url: form.url.trim(),
+          icon_url,
           category: form.category.trim(),
           color: form.color.trim(),
           order: Number(form.order),
@@ -119,7 +144,7 @@
         apps = apps
           .map((app) => (app.id === editingId ? updated : app))
           .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
-        form = { ...updated }
+        form = formFromApp(updated)
         notice = `Updated “${updated.name}”`
       } else {
         const created = await createApp({
@@ -127,6 +152,7 @@
           name: form.name.trim(),
           description: form.description.trim(),
           url: form.url.trim(),
+          icon_url,
           category: form.category.trim(),
           color: form.color.trim(),
           order: Number(form.order),
@@ -153,7 +179,7 @@
       const updated = await updateApp(app.id, { enabled: !app.enabled })
       apps = apps.map((item) => (item.id === app.id ? updated : item))
       if (editingId === app.id) {
-        form = { ...updated }
+        form = formFromApp(updated)
       }
       notice = updated.enabled
         ? `Enabled “${updated.name}”`
@@ -292,6 +318,26 @@
             required
           />
         </label>
+
+        <label>
+          <span>Icon URL</span>
+          <input
+            type="url"
+            value={form.icon_url ?? ''}
+            disabled={saving}
+            placeholder="https://example.com/icon.png"
+            oninput={(e) => {
+              const value = /** @type {HTMLInputElement} */ (e.currentTarget).value
+              form.icon_url = value.trim() ? value : null
+            }}
+          />
+        </label>
+        {#if form.icon_url}
+          <div class="icon-preview" aria-hidden="true">
+            <img src={form.icon_url} alt="" width="28" height="28" />
+            <span>Preview</span>
+          </div>
+        {/if}
 
         <div class="row">
           <label>
@@ -692,6 +738,27 @@
   .check input {
     width: auto;
     accent-color: var(--ink);
+  }
+
+  .icon-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-top: -0.25rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--ink) 4%, #fff);
+    color: color-mix(in srgb, var(--ink) 55%, transparent);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .icon-preview img {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #fff;
   }
 
   .actions {

@@ -2,47 +2,19 @@
   /** @type {{ app: import('./api.js').PortalApp, index: number }} */
   let { app, index = 0 } = $props()
 
-  let faviconLoaded = $state(false)
-  let candidateIndex = $state(0)
+  let iconFailed = $state(false)
 
   const initial = $derived(
     (app.name.trim().charAt(0) || '?').toUpperCase(),
   )
 
-  const candidates = $derived.by(() => {
-    try {
-      const origin = new URL(app.url).origin
-      return [
-        `${origin}/favicon.ico`,
-        `${origin}/favicon.png`,
-        `${origin}/apple-touch-icon.png`,
-        `${origin}/apple-touch-icon-precomposed.png`,
-      ]
-    } catch {
-      return []
-    }
-  })
-
-  const faviconSrc = $derived(candidates[candidateIndex] ?? null)
+  const iconSrc = $derived(app.icon_url?.trim() || null)
+  const showLetter = $derived(!iconSrc || iconFailed)
 
   $effect(() => {
-    // Reset when the app URL changes
-    void app.url
-    faviconLoaded = false
-    candidateIndex = 0
+    void app.icon_url
+    iconFailed = false
   })
-
-  function onFaviconLoad() {
-    faviconLoaded = true
-  }
-
-  function onFaviconError() {
-    if (candidateIndex < candidates.length - 1) {
-      candidateIndex += 1
-      return
-    }
-    faviconLoaded = false
-  }
 </script>
 
 <a
@@ -54,24 +26,23 @@
 >
   <div
     class="icon"
-    class:letter={!faviconLoaded}
+    class:letter={showLetter}
     aria-hidden="true"
   >
-    {#if faviconSrc}
+    {#if iconSrc && !iconFailed}
       <img
-        class="favicon"
-        class:visible={faviconLoaded}
-        src={faviconSrc}
+        class="icon-img"
+        src={iconSrc}
         alt=""
         width="28"
         height="28"
         loading="lazy"
         decoding="async"
-        onload={onFaviconLoad}
-        onerror={onFaviconError}
+        onerror={() => {
+          iconFailed = true
+        }}
       />
-    {/if}
-    {#if !faviconLoaded}
+    {:else}
       <span class="initial">{initial}</span>
     {/if}
   </div>
@@ -147,25 +118,15 @@
     overflow: hidden;
   }
 
-  .icon > * {
-    grid-area: 1 / 1;
-  }
-
   .icon.letter {
     background: var(--accent);
     color: #fff;
   }
 
-  .favicon {
+  .icon-img {
     width: 1.75rem;
     height: 1.75rem;
     object-fit: contain;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .favicon.visible {
-    opacity: 1;
   }
 
   .initial {

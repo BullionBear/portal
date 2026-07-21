@@ -63,6 +63,7 @@ Example app entry:
   "name": "Grafana",
   "description": "Metrics, logs, and operational dashboards",
   "url": "https://grafana.example.com",
+  "icon_url": "https://grafana.example.com/public/img/grafana_icon.svg",
   "category": "Observability",
   "color": "#F46800",
   "order": 10,
@@ -70,7 +71,7 @@ Example app entry:
 }
 ```
 
-Card icons are loaded from each app’s favicon; if unavailable, a colored capital letter is shown.
+Card icons use each app’s configured `icon_url` (editable in admin). If unset or the image fails to load, a colored capital letter is shown.
 
 ### Environment variables
 
